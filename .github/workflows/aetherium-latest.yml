@@ -336,8 +336,15 @@ jobs:
           cd kernel
 
           echo "::group::Integrating SuSFS for 5.10"
-          git clone https://gitlab.com/simonpunk/susfs4ksu/ -b gki-android12-5.10 sus
+          for i in 1 2 3 4 5; do
+            rm -rf sus
+            git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android12-5.10 sus && break
+            echo "::warning::Clone gagal (percobaan $i), tunggu 20 detik..."
+            sleep 20
+          done
+          [ -d sus/kernel_patches ] || { echo "::error::Clone SuSFS gagal"; exit 1; }
           rm -rf sus/.git
+
           susfs="sus/kernel_patches"
           cp -r "$susfs/fs" .
           cp -r "$susfs/include" .
@@ -345,6 +352,13 @@ jobs:
           patch -p1 < 50_add_susfs_in_gki-android12-5.10.patch || {
             echo "::warning::SuSFS patch had issues applying cleanly, some hunks may have failed or already been applied."
           }
+
+          # Cek hunk yang gagal
+          if find . -name '*.rej' | grep -q .; then
+            echo "::error::Ada hunk SuSFS yang gagal:"
+            find . -name '*.rej'
+            exit 1
+          fi
 
           # Fix set_nameidata arguments (some 5.10 kernels use 3 args instead of 4)
           echo "::group::Fixing set_nameidata in fs/namei.c"
