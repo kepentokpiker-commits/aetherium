@@ -14,7 +14,7 @@ on:
       BASE_BRANCH:
         description: "Base repo branch"
         required: true
-        default: "aetherium"
+        default: "android12-5.10"
       UPSTREAM_TAG:
         description: "Google upstream tag to merge (leave empty to skip merge)"
         required: false
